@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="HidroCalc UNI">
+  <defs>
+    <linearGradient id="agua" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#0e7490"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#agua)"/>
+  <path fill="#ffffff" d="M256 96c0 0-118 134-118 216a118 118 0 0 0 236 0C374 230 256 96 256 96Z"/>
+  <path fill="none" stroke="#0e7490" stroke-width="18" stroke-linecap="round" d="M196 328a64 64 0 0 0 58 58" opacity=".35"/>
+</svg>

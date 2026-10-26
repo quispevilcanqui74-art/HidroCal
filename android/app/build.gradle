@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'pe.hidrocalc.uni'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "pe.hidrocalc.uni"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            // APK sin firmar: para publicar en Play Store hay que crear un keystore
+            // y añadir signingConfigs (ver README-ANDROID.md).
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+// ---------------------------------------------------------------------------
+// La aplicación web vive en la raíz del repositorio (index.html, css/, js/).
+// En cada compilación se copia a assets/www para no duplicar código fuente.
+// ---------------------------------------------------------------------------
+def contenidoWeb = rootProject.projectDir.parentFile
+
+if (!new File(contenidoWeb, 'index.html').exists()) {
+    throw new GradleException(
+        "No se encontró index.html en '${contenidoWeb}'. " +
+        "La carpeta 'android/' debe estar junto a index.html, css/ y js/."
+    )
+}
+
+tasks.register('copiarWeb', Copy) {
+    description = 'Copia la aplicación web dentro de app/src/main/assets/www'
+    from(contenidoWeb) {
+        include 'index.html'
+        include 'manifest.webmanifest'
+        include 'icono.svg'
+        include 'css/**'
+        include 'js/**'
+    }
+    into file('src/main/assets/www')
+}
+
+tasks.named('preBuild').configure {
+    dependsOn 'copiarWeb'
+}

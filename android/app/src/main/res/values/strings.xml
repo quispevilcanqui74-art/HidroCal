@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HidroCalc UNI</string>
+    <string name="pulsa_para_salir">Pulsa atrás otra vez para salir</string>
+    <string name="no_se_pudo_abrir">No se pudo abrir el enlace</string>
+    <string name="nombre_impresion">HidroCalc UNI · Resumen de cálculo</string>
+</resources>

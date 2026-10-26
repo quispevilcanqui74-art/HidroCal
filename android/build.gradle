@@ -1,0 +1,5 @@
+// Complementos del proyecto. La app no usa librerías de terceros:
+// todo el peso visual y la lógica viven en los assets web.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}

@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HidroCalc UNI · Caudales de diseño y almacenamiento</title>
+  <meta name="description" content="Calculadora de caudales de diseño (Qprom, Qmd, Qmh) y volúmenes de cisterna y tanque elevado para poblaciones universitarias." />
+  <meta name="theme-color" content="#0e7490" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="HidroCalc" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icono.svg" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E" />
+
+  <!-- Tema: se aplica antes del primer render para evitar destellos -->
+  <script>
+    (function () {
+      try {
+        var guardado = localStorage.getItem('hidrocalc.tema');
+        var oscuro = guardado ? guardado === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (oscuro) document.documentElement.classList.add('dark');
+      } catch (e) { /* sin almacenamiento disponible */ }
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    window.tailwind = window.tailwind || {};
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'Consolas', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#ecfeff', 100: '#cffafe', 200: '#a5f3fc', 300: '#67e8f9', 400: '#22d3ee',
+              500: '#06b6d4', 600: '#0891b2', 700: '#0e7490', 800: '#155e75', 900: '#164e63', 950: '#083344'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer base {
+      body { @apply bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200; }
+      ::selection { @apply bg-brand-200 text-brand-900; }
+    }
+    @layer components {
+      .card { @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/60 dark:shadow-none; }
+      .card-body { @apply p-5 sm:p-6; }
+      .section-title { @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400; }
+      .label { @apply mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300; }
+      .hint { @apply mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400; }
+      .field { @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] font-semibold tabular-nums text-slate-900 shadow-sm transition placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:placeholder:text-slate-500; }
+      .field[aria-invalid="true"] { @apply border-rose-400 ring-4 ring-rose-500/10 focus:border-rose-500 dark:border-rose-500/70; }
+      .error-msg { @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium leading-snug text-rose-600 dark:text-rose-400; }
+      .seg { @apply grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800/60; }
+      .seg-btn { @apply rounded-lg px-3 py-1.5 text-[13px] font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white; }
+      .seg-btn[aria-selected="true"] { @apply bg-white text-brand-700 shadow-sm dark:bg-slate-950 dark:text-brand-300; }
+      .chip { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide; }
+      .chip-btn { @apply cursor-pointer rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium normal-case tracking-normal text-slate-600 transition hover:border-brand-400 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-brand-500 dark:hover:text-brand-300; }
+      .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/25; }
+      .btn-ghost { @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white; }
+      .btn-icon { @apply grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white; }
+      .kpi { @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/60 dark:shadow-none; }
+      .kpi-label { @apply text-[10.5px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400; }
+      .kpi-value { @apply mt-1.5 text-[1.35rem] font-bold leading-none tracking-tight tabular-nums text-slate-900 sm:text-2xl dark:text-white; }
+      .kpi-unit { @apply mt-1.5 block text-[10.5px] font-medium uppercase tracking-wide text-slate-400; }
+      .th { @apply border-b border-slate-200 px-3 py-2.5 text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:border-slate-800 dark:text-slate-400; }
+      .th-orden { @apply cursor-pointer select-none transition hover:text-brand-700 dark:hover:text-brand-300; }
+      .table-row { @apply cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-brand-50/70 dark:border-slate-800/70 dark:hover:bg-brand-500/5; }
+      .td { @apply px-3 py-2.5 align-middle; }
+      .field-tabla { @apply w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-[13px] font-semibold tabular-nums text-slate-900 transition hover:border-slate-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:text-white dark:hover:border-slate-700 dark:focus:bg-slate-950; }
+      .field-tabla[aria-invalid="true"] { @apply border-rose-400 text-rose-600 dark:text-rose-400; }
+      .memoria { @apply space-y-1.5 rounded-xl border border-slate-200/70 bg-slate-50/80 p-4 font-mono text-[12px] leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300; }
+      .badge { @apply inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[10.5px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300; }
+      .estado-ok { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300; }
+      .estado-alerta { @apply bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300; }
+    }
+  </style>
+
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+
+<body>
+  <div id="aviso-offline" style="display:none" role="status">
+    <strong>Sin conexión.</strong> Los estilos necesitan internet la primera vez (se descargan de un CDN).
+    Conéctate, abre la app y vuelve a intentarlo: los cálculos funcionan igual, pero sin formato visual.
+  </div>
+
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60rem_28rem_at_50%_-8rem,rgba(6,182,212,0.16),transparent)] dark:bg-[radial-gradient(60rem_28rem_at_50%_-8rem,rgba(6,182,212,0.20),transparent)]"></div>
+
+  <!-- ======================= CABECERA ======================= -->
+  <header class="no-print sticky top-0 z-30 border-b border-slate-200/70 bg-white/85 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/85">
+    <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+      <div class="flex min-w-0 items-center gap-3">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-lg shadow-brand-500/25">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5"><path d="M12 2.7 6.6 8.9a7.6 7.6 0 1 0 10.8 0L12 2.7Z" stroke-linejoin="round"/><path d="M8.9 14.2a3.4 3.4 0 0 0 3.3 3.1" stroke-linecap="round"/></svg>
+        </span>
+        <div class="min-w-0">
+          <p class="truncate text-[15px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">HidroCalc <span class="text-brand-600 dark:text-brand-400">UNI</span></p>
+          <p class="truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">Caudales de diseño y almacenamiento · RNE IS.010</p>
+        </div>
+      </div>
+
+      <div class="ml-auto flex items-center gap-1.5">
+        <button id="btn-ejemplo" type="button" class="btn-ghost" title="Cargar un caso de ejemplo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z" stroke-linejoin="round"/></svg>
+          <span class="hidden sm:inline">Ejemplo</span>
+        </button>
+        <button id="btn-reiniciar" type="button" class="btn-ghost" title="Restablecer los datos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path d="M3 12a9 9 0 1 0 3.2-6.9" stroke-linecap="round"/><path d="M3 4.5V10h5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="hidden sm:inline">Reiniciar</span>
+        </button>
+        <button id="btn-imprimir" type="button" class="btn-ghost" title="Imprimir o guardar como PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4"><path d="M7 8V3h10v5" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 13h10v8H7z" stroke-linejoin="round"/></svg>
+          <span class="hidden sm:inline">PDF</span>
+        </button>
+        <button id="btn-tema" type="button" class="btn-icon" aria-label="Cambiar entre tema claro y oscuro" title="Cambiar tema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px] dark:hidden"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="hidden h-[18px] w-[18px] dark:block"><path d="M20 14.6A8.4 8.4 0 0 1 9.4 4a8.5 8.5 0 1 0 10.6 10.6Z" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================= CONTENIDO ======================= -->
+  <main class="mx-auto grid max-w-7xl gap-6 px-4 pb-20 pt-6 sm:px-6 lg:grid-cols-12 lg:gap-8">
+
+    <!-- ---------------- PANEL DE ENTRADA ---------------- -->
+    <section class="space-y-5 lg:col-span-5" aria-label="Datos de entrada">
+
+      <div class="card">
+        <div class="card-body space-y-5">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><path d="M16 19v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V19" stroke-linecap="round"/><circle cx="9" cy="7" r="3.2"/><path d="M22 19v-1.5a4 4 0 0 0-3-3.9M16.5 3.6a4 4 0 0 1 0 7" stroke-linecap="round"/></svg>
+              Población y dotación
+            </h2>
+            <span class="badge">L/unidad·día</span>
+          </div>
+
+          <div class="seg" role="tablist" aria-label="Modo de ingreso de la población">
+            <button type="button" class="seg-btn" data-modo="simple" role="tab" aria-selected="true" aria-controls="panel-simple">Modo simple</button>
+            <button type="button" class="seg-btn" data-modo="detallado" role="tab" aria-selected="false" aria-controls="panel-detallado">Por tipo de usuario</button>
+          </div>
+
+          <!-- Modo simple -->
+          <div id="panel-simple" class="space-y-4">
+            <div>
+              <label class="label" for="poblacion">Población universitaria</label>
+              <div class="relative">
+                <input id="poblacion" class="field pr-24" type="number" inputmode="numeric" min="1" max="200000" step="1" placeholder="Ej. 1200" autocomplete="off" />
+                <span class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10.5px] font-medium uppercase tracking-wide text-slate-400">personas</span>
+              </div>
+              <p class="hint">Incluye estudiantes, docentes y personal administrativo.</p>
+              <p class="error-msg hidden" data-error="poblacion"></p>
+            </div>
+
+            <div>
+              <label class="label" for="dotacion">Dotación</label>
+              <div class="relative">
+                <input id="dotacion" class="field pr-28" type="number" inputmode="decimal" min="5" max="500" step="0.5" placeholder="Ej. 25" autocomplete="off" />
+                <span class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10.5px] font-medium uppercase tracking-wide text-slate-400">L/persona·día</span>
+              </div>
+              <div class="mt-2 flex flex-wrap gap-1.5" id="chips-dotacion">
+                <button type="button" class="chip-btn" data-dotacion="20">20 · mín. referencial</button>
+                <button type="button" class="chip-btn" data-dotacion="25">25 · universidad</button>
+                <button type="button" class="chip-btn" data-dotacion="50">50 · con comedor</button>
+              </div>
+              <p class="error-msg hidden" data-error="dotacion"></p>
+            </div>
+          </div>
+
+          <!-- Modo detallado -->
+          <div id="panel-detallado" class="hidden space-y-3">
+            <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[10px] uppercase tracking-[0.08em] text-slate-500 dark:bg-slate-900/80 dark:text-slate-400">
+                  <tr>
+                    <th class="px-3 py-2 font-semibold">Tipo</th>
+                    <th class="px-2 py-2 text-right font-semibold">Cant.</th>
+                    <th class="px-2 py-2 text-right font-semibold">L/p·día</th>
+                    <th class="w-9"></th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-desglose"></tbody>
+              </table>
+            </div>
+            <button id="btn-agregar-fila" type="button" class="btn-ghost w-full">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+              Agregar tipo de usuario
+            </button>
+            <p class="error-msg hidden" data-error="desglose"></p>
+            <div class="rounded-xl border border-brand-200/70 bg-brand-50/70 p-3 dark:border-brand-500/20 dark:bg-brand-500/10">
+              <div class="flex items-center justify-between text-[12.5px] text-brand-900 dark:text-brand-100">
+                <span class="font-medium">Población total</span>
+                <span id="desglose-poblacion" class="font-mono font-bold tabular-nums">—</span>
+              </div>
+              <div class="mt-1 flex items-center justify-between text-[12.5px] text-brand-900 dark:text-brand-100">
+                <span class="font-medium">Dotación equivalente</span>
+                <span id="desglose-dotacion" class="font-mono font-bold tabular-nums">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coeficientes -->
+      <div class="card">
+        <div class="card-body space-y-5">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
+            Coeficientes de variación
+          </h2>
+
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label class="label mb-0" for="k1">K1 · Variación diaria</label>
+              <output id="k1-out" for="k1" class="rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200">1.30</output>
+            </div>
+            <input id="k1" class="range" type="range" min="1" max="2" step="0.05" value="1.3" aria-describedby="k1-hint" />
+            <p id="k1-hint" class="hint">Rango usual 1.2 – 1.5 para consumo poblacional.</p>
+            <p class="error-msg hidden" data-error="k1"></p>
+          </div>
+
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label class="label mb-0" for="k2">K2 · Variación horaria</label>
+              <output id="k2-out" for="k2" class="rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200">2.00</output>
+            </div>
+            <input id="k2" class="range" type="range" min="1" max="4" step="0.1" value="2" aria-describedby="k2-hint" />
+            <p id="k2-hint" class="hint">Rango usual 1.8 – 2.5; en campus suele adoptarse K2 = 2.0.</p>
+            <p class="error-msg hidden" data-error="k2"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Almacenamiento -->
+      <div class="card">
+        <div class="card-body space-y-5">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><path d="M5 7.5a7 3 0 1 0 14 0 7 3 0 1 0-14 0" /><path d="M5 7.5v9a7 3 0 0 0 14 0v-9"/><path d="M5 12a7 3 0 0 0 14 0" opacity=".45"/></svg>
+            Almacenamiento y bombeo
+          </h2>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="dias">Días de reserva</label>
+              <div class="relative">
+                <input id="dias" class="field pr-12" type="number" inputmode="decimal" min="0.5" max="7" step="0.5" value="1" />
+                <span class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10.5px] font-medium uppercase tracking-wide text-slate-400">días</span>
+              </div>
+              <p class="error-msg hidden" data-error="dias"></p>
+            </div>
+            <div>
+              <label class="label" for="horasBombeo">Bombeo</label>
+              <div class="relative">
+                <input id="horasBombeo" class="field pr-9" type="number" inputmode="numeric" min="1" max="23" step="1" value="6" />
+                <span class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10.5px] font-medium uppercase tracking-wide text-slate-400">h</span>
+              </div>
+              <p class="error-msg hidden" data-error="horasBombeo"></p>
+            </div>
+          </div>
+
+          <div>
+            <div class="mb-2 flex items-baseline justify-between gap-2">
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Distribución del volumen</span>
+              <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                <b class="text-brand-700 dark:text-brand-300" id="pct-cis-out">75%</b> cisterna ·
+                <b class="text-amber-600 dark:text-amber-400" id="pct-tan-out">25%</b> tanque
+              </span>
+            </div>
+            <input id="pctCisterna" class="range range-split" type="range" min="0" max="100" step="5" value="75" aria-label="Porcentaje del volumen destinado a cisterna" />
+            <div class="mt-2 flex justify-between text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+              <span>Cisterna</span><span>Tanque elevado</span>
+            </div>
+            <p class="error-msg hidden" data-error="pctCisterna"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-brand-200/70 bg-brand-50/60 p-4 dark:border-brand-500/20 dark:bg-brand-500/10">
+        <p class="text-[12px] font-semibold uppercase tracking-[0.12em] text-brand-800 dark:text-brand-200">Criterio de cálculo</p>
+        <p class="mt-1.5 font-mono text-[11.5px] leading-relaxed text-brand-900/90 dark:text-brand-100/90">
+          Q<sub>prom</sub> = P·d / 86 400<br />
+          Q<sub>md</sub> = K1·Q<sub>prom</sub> &nbsp;·&nbsp; Q<sub>mh</sub> = K2·Q<sub>md</sub><br />
+          V<sub>t</sub> = P·d·días / 1 000
+        </p>
+        <p class="mt-2 text-[11.5px] leading-relaxed text-brand-900/70 dark:text-brand-100/70">Resultados referenciales; deben ser verificados por el ingeniero responsable del proyecto.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- PANEL DE RESULTADOS ---------------- -->
+    <section class="space-y-5 lg:col-span-7" aria-label="Resultados" id="resultados">
+
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Resultados</h2>
+        <span id="estado-calculo" class="chip estado-ok">
+          <span class="h-1.5 w-1.5 rounded-full bg-current"></span> Cálculo actualizado
+        </span>
+      </div>
+
+      <div id="aviso-invalido" class="hidden rounded-2xl border border-amber-300/80 bg-amber-50 p-4 text-[13px] leading-relaxed text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p class="flex items-start gap-2 font-semibold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-0.5 h-4 w-4 shrink-0"><path d="M12 9v4.5M12 17h.01" stroke-linecap="round"/><path d="M10.3 3.8 2.5 17.2A1.9 1.9 0 0 0 4.2 20h15.6a1.9 1.9 0 0 0 1.7-2.8L13.7 3.8a1.9 1.9 0 0 0-3.4 0Z" stroke-linejoin="round"/></svg>
+          Hay datos por corregir
+        </p>
+        <p class="mt-1 pl-6 text-[12.5px]">Revisa los campos marcados en rojo; los resultados se muestran en cuanto el formulario sea válido.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="kpi">
+          <p class="kpi-label">Q<sub>prom</sub></p>
+          <p class="kpi-value" id="kpi-qprom">—</p>
+          <span class="kpi-unit" id="kpi-qprom-u">L/s</span>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">Q<sub>md</sub></p>
+          <p class="kpi-value" id="kpi-qmd">—</p>
+          <span class="kpi-unit" id="kpi-qmd-u">L/s</span>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">Q<sub>mh</sub></p>
+          <p class="kpi-value" id="kpi-qmh">—</p>
+          <span class="kpi-unit" id="kpi-qmh-u">L/s</span>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">V<sub>total</sub></p>
+          <p class="kpi-value" id="kpi-vtotal">—</p>
+          <span class="kpi-unit" id="kpi-vtotal-u">m³</span>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="card">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <h3 class="section-title">Caudales</h3>
+              <span class="text-[10.5px] font-medium text-slate-400">escala relativa</span>
+            </div>
+            <div id="chart-caudales" class="mt-4 space-y-3.5"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h3 class="section-title">Reparto del volumen</h3>
+            <div class="mt-4 flex items-center gap-5">
+              <div id="donut" class="relative h-[104px] w-[104px] shrink-0 rounded-full transition-all duration-500" style="background: conic-gradient(#0891b2 0 75%, #f59e0b 75% 100%)">
+                <div class="absolute inset-[13px] grid place-items-center rounded-full bg-white text-center dark:bg-slate-900">
+                  <div>
+                    <p class="font-mono text-[15px] font-bold leading-none text-slate-900 dark:text-white" id="donut-centro">—</p>
+                    <p class="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">m³ total</p>
+                  </div>
+                </div>
+              </div>
+              <div class="min-w-0 flex-1 space-y-2.5 text-[12px]">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
+                    <span class="h-2 w-2 rounded-full bg-brand-600 dark:bg-brand-400"></span> Cisterna
+                  </span>
+                  <span class="font-mono font-semibold tabular-nums text-slate-900 dark:text-white" id="legend-cisterna">—</span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
+                    <span class="h-2 w-2 rounded-full bg-amber-500"></span> Tanque elevado
+                  </span>
+                  <span class="font-mono font-semibold tabular-nums text-slate-900 dark:text-white" id="legend-tanque">—</span>
+                </div>
+                <p class="pt-1 text-[11px] leading-relaxed text-slate-400" id="legend-nota">Reserva de 1 día</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="card">
+          <div class="card-body">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h3 class="section-title">Cisterna</h3>
+                <p class="mt-2 font-mono text-2xl font-bold tabular-nums leading-none text-slate-900 dark:text-white" id="res-cisterna">—</p>
+                <p class="mt-1 text-[11.5px] text-slate-500 dark:text-slate-400">m³ <span id="res-cisterna-pct">(75%)</span></p>
+              </div>
+              <span class="badge">Comercial <b class="font-mono" id="res-cisterna-com">—</b></span>
+            </div>
+            <p class="mt-3 border-t border-dashed border-slate-200 pt-2.5 text-[11px] leading-relaxed text-slate-500 dark:border-slate-800 dark:text-slate-400" id="res-cisterna-dim">—</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h3 class="section-title">Tanque elevado</h3>
+                <p class="mt-2 font-mono text-2xl font-bold tabular-nums leading-none text-slate-900 dark:text-white" id="res-tanque">—</p>
+                <p class="mt-1 text-[11.5px] text-slate-500 dark:text-slate-400">m³ <span id="res-tanque-pct">(25%)</span></p>
+              </div>
+              <span class="badge">Comercial <b class="font-mono" id="res-tanque-com">—</b></span>
+            </div>
+            <p class="mt-3 border-t border-dashed border-slate-200 pt-2.5 text-[11px] leading-relaxed text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              Caudal de bombeo requerido: <b class="font-mono text-slate-700 dark:text-slate-200" id="res-bombeo">—</b>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="advertencias" class="hidden rounded-2xl border border-amber-300/80 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 dark:text-amber-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><path d="M12 9v4.5M12 17h.01" stroke-linecap="round"/><path d="M10.3 3.8 2.5 17.2A1.9 1.9 0 0 0 4.2 20h15.6a1.9 1.9 0 0 0 1.7-2.8L13.7 3.8a1.9 1.9 0 0 0-3.4 0Z" stroke-linejoin="round"/></svg>
+          Observaciones
+        </p>
+        <ul id="lista-advertencias" class="mt-2 space-y-1 pl-5 text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-100"></ul>
+      </div>
+
+      <!-- Tabla resumen -->
+      <div class="card" id="resumen">
+        <div class="card-body space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M9 9.5V20" /></svg>
+              Resumen de cálculo
+            </h2>
+            <div class="flex items-center gap-1.5">
+              <div class="relative">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/></svg>
+                <input id="buscar" type="search" class="field w-36 py-1.5 pl-8 text-[12.5px] font-normal sm:w-44" placeholder="Buscar fila…" aria-label="Buscar en la tabla" autocomplete="off" />
+              </div>
+              <select id="unidad" class="field w-auto cursor-pointer py-1.5 pl-2.5 pr-7 text-[12.5px] font-semibold" aria-label="Unidad de caudal">
+                <option value="L/s">L/s</option>
+                <option value="m³/h">m³/h</option>
+                <option value="L/min">L/min</option>
+                <option value="GPM">GPM</option>
+              </select>
+              <button id="btn-csv" type="button" class="btn-ghost px-2.5 py-1.5 text-[12.5px]" title="Descargar CSV">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17" stroke-linecap="round"/></svg>
+                CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="-mx-1 overflow-x-auto">
+            <table class="w-full min-w-[540px] border-collapse text-left text-[13px]">
+              <thead>
+                <tr>
+                  <th class="th th-orden pl-4" data-orden="concepto" scope="col">Concepto <span data-flecha="concepto" class="ml-1 text-slate-300 dark:text-slate-600"></span></th>
+                  <th class="th th-orden" data-orden="simbolo" scope="col">Símbolo <span data-flecha="simbolo" class="ml-1 text-slate-300 dark:text-slate-600"></span></th>
+                  <th class="th" scope="col">Expresión</th>
+                  <th class="th th-orden text-right" data-orden="valor" scope="col">Valor <span data-flecha="valor" class="ml-1 text-slate-300 dark:text-slate-600"></span></th>
+                  <th class="th pr-4" scope="col">Unidad</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-resumen"></tbody>
+            </table>
+          </div>
+
+          <p class="text-[11px] text-slate-400 dark:text-slate-500">Haz clic en una fila para copiar el resultado · ordena las columnas desde los encabezados.</p>
+        </div>
+      </div>
+
+      <!-- Memoria de cálculo -->
+      <details class="card group" open>
+        <summary class="card-body flex cursor-pointer list-none items-center justify-between gap-2 select-none">
+          <span class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-3.5 w-3.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/></svg>
+            Memoria de cálculo
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+          <div id="memoria" class="memoria"></div>
+        </div>
+      </details>
+
+      <p class="px-1 text-center text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
+        HidroCalc UNI · Herramienta referencial basada en el RNE IS.010. La verificación final del diseño hidráulico corresponde al profesional responsable.
+      </p>
+    </section>
+  </main>
+
+  <div id="toasts" class="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="js/calculos.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Si el CDN de Tailwind no cargó (sin internet), se activa el modo de respaldo legible.
+    window.addEventListener('load', function () {
+      var sonda = document.createElement('div');
+      sonda.className = 'hidden';
+      document.body.appendChild(sonda);
+      var estilosOk = window.getComputedStyle(sonda).display === 'none';
+      document.body.removeChild(sonda);
+      if (!estilosOk) document.documentElement.classList.add('sin-tailwind');
+    });
+  </script>
+</body>
+</html>

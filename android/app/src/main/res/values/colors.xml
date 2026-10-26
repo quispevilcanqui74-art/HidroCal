@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="marca_400">#22D3EE</color>
+    <color name="marca_500">#06B6D4</color>
+    <color name="marca_600">#0891B2</color>
+    <color name="marca_700">#0E7490</color>
+    <color name="marca_800">#155E75</color>
+    <color name="fondo_app">#F8FAFC</color>
+</resources>

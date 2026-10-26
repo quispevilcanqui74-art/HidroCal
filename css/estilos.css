@@ -1,0 +1,304 @@
+/* ==========================================================================
+   HidroCalc UNI · Estilos complementarios a Tailwind
+   Contiene: sliders, microanimaciones, toasts y reglas de impresión.
+   ========================================================================== */
+
+/* ------------------------------ Sliders --------------------------------- */
+.range {
+  --pct: 50%;
+  --relleno: #0891b2;
+  --pista: #e2e8f0;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--relleno) 0 var(--pct), var(--pista) var(--pct) 100%);
+  cursor: pointer;
+  outline: none;
+}
+
+.dark .range {
+  --relleno: #22d3ee;
+  --pista: #1e293b;
+}
+
+/* Reparto cisterna / tanque: la pista muestra ambos destinos */
+.range-split {
+  background: linear-gradient(to right, #0891b2 0 var(--pct), #f59e0b var(--pct) 100%);
+}
+
+.dark .range-split {
+  background: linear-gradient(to right, #22d3ee 0 var(--pct), #fbbf24 var(--pct) 100%);
+}
+
+.range:focus-visible {
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.22);
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid var(--relleno);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.28);
+  transition: transform 0.15s ease;
+}
+
+.range::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+
+.range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid var(--relleno);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.28);
+}
+
+.range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+/* La pista se dibuja también en Firefox mediante el gradiente del propio input */
+.range::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--relleno);
+}
+
+/* --------------------------- Inputs numéricos --------------------------- */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* ------------------------------ Animaciones ----------------------------- */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.fade-in {
+  animation: aparecer 0.28s ease-out both;
+}
+
+@keyframes deslizar-toast {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.toast {
+  animation: deslizar-toast 0.22s ease-out both;
+}
+
+.toast.saliendo {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.sacudir {
+  animation: sacudir 0.35s ease-in-out;
+}
+
+/* ------------------------------- Detalles ------------------------------- */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior-y: contain;
+}
+
+#tbody-resumen tr:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: -2px;
+}
+
+main::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+main::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark main::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* ------------------ Modo de respaldo (sin Tailwind) --------------------- */
+/* Se activa cuando el CDN no carga (por ejemplo, primer arranque del APK
+   sin internet). Mantiene la app legible y operativa, sin dependencias. */
+html.sin-tailwind body {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+html.sin-tailwind #aviso-offline {
+  display: block !important;
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #78350f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+html.sin-tailwind .hidden,
+html.sin-tailwind .no-print {
+  display: none !important;
+}
+
+html.sin-tailwind header {
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+html.sin-tailwind main,
+html.sin-tailwind section {
+  display: block;
+  margin: 16px 0;
+}
+
+html.sin-tailwind .card,
+html.sin-tailwind .kpi {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+html.sin-tailwind .kpi {
+  display: inline-block;
+  width: 47%;
+  margin-right: 2%;
+  vertical-align: top;
+}
+
+html.sin-tailwind .label,
+html.sin-tailwind label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+html.sin-tailwind input,
+html.sin-tailwind select,
+html.sin-tailwind button {
+  margin: 2px 0;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font: inherit;
+}
+
+html.sin-tailwind table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+html.sin-tailwind th,
+html.sin-tailwind td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+html.sin-tailwind #toasts {
+  position: static;
+  display: block;
+}
+
+/* ------------------------------- Impresión ------------------------------ */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  .no-print,
+  #toasts,
+  #aviso-invalido {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  main {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  main > section + section {
+    margin-top: 14px;
+  }
+
+  .card,
+  .kpi {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
+    break-inside: avoid;
+  }
+
+  .card {
+    border-radius: 10px !important;
+  }
+
+  h2,
+  h3 {
+    color: #0f172a !important;
+  }
+
+  #memoria {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+  }
+
+  details:not([open]) > div {
+    display: none;
+  }
+}
