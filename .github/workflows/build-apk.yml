@@ -1,0 +1,54 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  construir-apk:
+    name: APK de depuracion
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Aceptar licencias del SDK de Android
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+
+      - name: Compilar el APK
+        run: |
+          if command -v gradle >/dev/null 2>&1; then
+            gradle assembleDebug --no-daemon --stacktrace
+          else
+            wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+            unzip -q /tmp/gradle.zip -d /tmp
+            /tmp/gradle-8.7/bin/gradle assembleDebug --no-daemon --stacktrace
+          fi
+
+      - name: Preparar el artefacto
+        run: |
+          mkdir -p salida
+          cp app/build/outputs/apk/debug/app-debug.apk salida/hidrocalc-uni-1.0.0.apk
+          ls -lh salida
+
+      - name: Publicar el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hidrocalc-uni-apk
+          path: android/salida/hidrocalc-uni-1.0.0.apk
+          if-no-files-found: error
+          retention-days: 30
